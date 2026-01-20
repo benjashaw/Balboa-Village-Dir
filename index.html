@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Balboa Village Events & Directory</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div id="app">
+    <header class="header">
+      <div class="header-content">
+        <h1>Balboa Village</h1>
+        <p class="tagline">Events & Directory</p>
+      </div>
+      <button id="auth-btn" class="merchant-btn">Merchant Login</button>
+    </header>
+
+    <nav class="nav">
+      <button class="nav-btn active" data-tab="calendar">
+        <span class="nav-icon">📅</span>
+        <span class="nav-label">Events</span>
+      </button>
+      <button class="nav-btn" data-tab="directory">
+        <span class="nav-icon">🏪</span>
+        <span class="nav-label">Directory</span>
+      </button>
+      <button class="nav-btn hidden" data-tab="settings" id="settings-nav-btn">
+        <span class="nav-icon">⚙️</span>
+        <span class="nav-label">Settings</span>
+      </button>
+      <span id="auth-badge" class="auth-badge hidden">Merchant Mode</span>
+    </nav>
+
+    <main class="main">
+      <!-- Calendar View -->
+      <section id="calendar-view" class="view active">
+        <div class="view-header">
+          <h2>Upcoming Events</h2>
+          <button id="add-event-btn" class="btn btn-primary hidden">+ Add Event</button>
+        </div>
+
+        <div id="event-form-container" class="hidden">
+          <form id="event-form" class="card form-card">
+            <h3 id="event-form-title">Add New Event</h3>
+            <input type="hidden" id="event-edit-id" value="">
+            <div class="form-row two-col">
+              <div class="form-group">
+                <label for="event-title">Event Title *</label>
+                <input type="text" id="event-title" required>
+              </div>
+              <div class="form-group">
+                <label for="event-type">Event Type *</label>
+                <select id="event-type" required></select>
+              </div>
+            </div>
+            <div class="form-row three-col">
+              <div class="form-group">
+                <label for="event-date">Date *</label>
+                <input type="date" id="event-date" required>
+              </div>
+              <div class="form-group">
+                <label for="event-time">Start Time</label>
+                <input type="time" id="event-time">
+              </div>
+              <div class="form-group">
+                <label for="event-end-time">End Time</label>
+                <input type="time" id="event-end-time">
+              </div>
+            </div>
+            <div class="form-group">
+              <label for="event-location">Location</label>
+              <input type="text" id="event-location">
+            </div>
+            <div class="form-group">
+              <label for="event-description">Description</label>
+              <textarea id="event-description" rows="3" placeholder="You can include links like https://example.com"></textarea>
+            </div>
+            <div class="form-group">
+              <label for="event-link">Link to More Info (optional)</label>
+              <input type="url" id="event-link" placeholder="https://...">
+            </div>
+            <div class="form-group">
+              <label for="event-business">Hosting Business (optional)</label>
+              <select id="event-business">
+                <option value="">-- Select a business --</option>
+              </select>
+            </div>
+            <div class="form-actions">
+              <button type="button" class="btn btn-secondary" id="cancel-event-btn">Cancel</button>
+              <button type="submit" class="btn btn-primary" id="event-submit-btn">Add Event</button>
+            </div>
+          </form>
+        </div>
+
+        <div class="events-toolbar">
+          <div class="filter-bar">
+            <label for="event-filter">Filter by type:</label>
+            <select id="event-filter"></select>
+          </div>
+          <div class="view-toggle">
+            <button class="view-toggle-btn active" data-view="list" title="List View">
+              <span class="toggle-icon">☰</span>
+              <span class="toggle-label">List</span>
+            </button>
+            <button class="view-toggle-btn" data-view="calendar" title="Calendar View">
+              <span class="toggle-icon">📅</span>
+              <span class="toggle-label">Calendar</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- List View -->
+        <div id="events-list" class="events-list"></div>
+        <div class="past-events-toggle">
+          <button id="toggle-past-events" class="btn btn-secondary">Show Past Events</button>
+        </div>
+
+        <!-- Calendar View -->
+        <div id="events-calendar" class="events-calendar hidden">
+          <div class="calendar-nav">
+            <button class="btn btn-secondary btn-small" id="prev-month">&larr; Prev</button>
+            <h3 id="calendar-month-year"></h3>
+            <button class="btn btn-secondary btn-small" id="next-month">Next &rarr;</button>
+          </div>
+          <div class="calendar-grid">
+            <div class="calendar-header-row">
+              <div class="calendar-day-header">Sun</div>
+              <div class="calendar-day-header">Mon</div>
+              <div class="calendar-day-header">Tue</div>
+              <div class="calendar-day-header">Wed</div>
+              <div class="calendar-day-header">Thu</div>
+              <div class="calendar-day-header">Fri</div>
+              <div class="calendar-day-header">Sat</div>
+            </div>
+            <div id="calendar-days" class="calendar-days"></div>
+          </div>
+        </div>
+
+        <!-- Day Events Modal -->
+        <div id="day-events-modal" class="modal hidden">
+          <div class="modal-content card">
+            <div class="modal-header">
+              <h3 id="modal-date-title"></h3>
+              <button class="modal-close" id="close-day-modal">&times;</button>
+            </div>
+            <div id="modal-events-list" class="modal-events-list"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Directory View -->
+      <section id="directory-view" class="view hidden">
+        <div class="view-header">
+          <h2>Business Directory</h2>
+          <button id="add-business-btn" class="btn btn-primary hidden">+ Add Business</button>
+        </div>
+
+        <div id="business-form-container" class="hidden">
+          <form id="business-form" class="card form-card">
+            <h3 id="business-form-title">Add New Business</h3>
+            <input type="hidden" id="business-edit-id" value="">
+            <div class="form-row two-col">
+              <div class="form-group">
+                <label for="business-name">Business Name *</label>
+                <input type="text" id="business-name" required>
+              </div>
+              <div class="form-group">
+                <label for="business-category">Category *</label>
+                <select id="business-category" required>
+                  <option value="Restaurant">Restaurant</option>
+                  <option value="Bakery">Bakery</option>
+                  <option value="Cafe">Cafe</option>
+                  <option value="Bar & Restaurant">Bar & Restaurant</option>
+                  <option value="Food & Beverage">Food & Beverage</option>
+                  <option value="Retail">Retail</option>
+                  <option value="Arts & Crafts">Arts & Crafts</option>
+                  <option value="Entertainment">Entertainment</option>
+                  <option value="Sports & Hobbies">Sports & Hobbies</option>
+                  <option value="Grocery">Grocery</option>
+                  <option value="Services">Services</option>
+                  <option value="Health & Wellness">Health & Wellness</option>
+                  <option value="Other">Other</option>
+                </select>
+              </div>
+            </div>
+            <div class="form-group">
+              <label for="business-image">Business Logo/Photo</label>
+              <div class="image-upload-container">
+                <input type="file" id="business-image" accept="image/*">
+                <div id="business-image-preview" class="image-preview hidden">
+                  <img id="business-preview-img" src="" alt="Preview">
+                  <button type="button" class="btn btn-small btn-danger" id="remove-business-image">Remove</button>
+                </div>
+              </div>
+              <input type="hidden" id="business-image-data" value="">
+            </div>
+            <div class="form-group">
+              <label for="business-description">Description</label>
+              <textarea id="business-description" rows="3"></textarea>
+            </div>
+            <div class="form-row two-col">
+              <div class="form-group">
+                <label for="business-address">Address</label>
+                <input type="text" id="business-address">
+              </div>
+              <div class="form-group">
+                <label for="business-phone">Phone</label>
+                <input type="tel" id="business-phone">
+              </div>
+            </div>
+            <div class="form-row two-col">
+              <div class="form-group">
+                <label for="business-website">Website URL</label>
+                <input type="url" id="business-website" placeholder="https://">
+              </div>
+              <div class="form-group">
+                <label for="business-hours">Business Hours</label>
+                <input type="text" id="business-hours" placeholder="e.g., Mon-Fri: 9am-5pm">
+              </div>
+            </div>
+            <div class="form-actions">
+              <button type="button" class="btn btn-secondary" id="cancel-business-btn">Cancel</button>
+              <button type="submit" class="btn btn-primary" id="business-submit-btn">Add Business</button>
+            </div>
+          </form>
+        </div>
+
+        <div class="filter-bar">
+          <label for="category-filter">Filter by category:</label>
+          <select id="category-filter">
+            <option value="all">All Categories</option>
+            <option value="Restaurant">Restaurant</option>
+            <option value="Bakery">Bakery</option>
+            <option value="Cafe">Cafe</option>
+            <option value="Bar & Restaurant">Bar & Restaurant</option>
+            <option value="Food & Beverage">Food & Beverage</option>
+            <option value="Retail">Retail</option>
+            <option value="Arts & Crafts">Arts & Crafts</option>
+            <option value="Entertainment">Entertainment</option>
+            <option value="Sports & Hobbies">Sports & Hobbies</option>
+            <option value="Grocery">Grocery</option>
+            <option value="Services">Services</option>
+            <option value="Health & Wellness">Health & Wellness</option>
+            <option value="Other">Other</option>
+          </select>
+        </div>
+
+        <div id="business-list" class="business-grid"></div>
+      </section>
+
+      <!-- Settings View (Merchant Only) -->
+      <section id="settings-view" class="view hidden">
+        <div class="view-header">
+          <h2>Merchant Settings</h2>
+        </div>
+
+        <!-- Event Types Management -->
+        <div class="card settings-section">
+          <h3>Event Types</h3>
+          <p class="settings-description">Manage the available event types for your calendar.</p>
+
+          <div id="event-types-list" class="settings-list"></div>
+
+          <form id="add-event-type-form" class="inline-form">
+            <div class="form-group">
+              <label for="new-event-type">Add New Event Type</label>
+              <div class="input-with-button">
+                <input type="text" id="new-event-type" placeholder="e.g., Fundraiser" required>
+                <button type="submit" class="btn btn-primary btn-small">Add</button>
+              </div>
+            </div>
+          </form>
+        </div>
+
+        <!-- Business Categories Management -->
+        <div class="card settings-section">
+          <h3>Business Categories</h3>
+          <p class="settings-description">Manage the available business categories for the directory.</p>
+
+          <div id="business-categories-list" class="settings-list"></div>
+
+          <form id="add-category-form" class="inline-form">
+            <div class="form-group">
+              <label for="new-category">Add New Category</label>
+              <div class="input-with-button">
+                <input type="text" id="new-category" placeholder="e.g., Entertainment" required>
+                <button type="submit" class="btn btn-primary btn-small">Add</button>
+              </div>
+            </div>
+          </form>
+        </div>
+
+        <!-- Quick Business List -->
+        <div class="card settings-section">
+          <h3>Registered Businesses</h3>
+          <p class="settings-description">Add, edit, or remove businesses from the directory.</p>
+
+          <div id="businesses-settings-list" class="settings-list"></div>
+
+          <div class="add-business-section">
+            <button type="button" class="btn btn-secondary" id="toggle-add-business-form">+ Add New Business</button>
+
+            <form id="settings-business-form" class="settings-add-form hidden">
+              <div class="form-row two-col">
+                <div class="form-group">
+                  <label for="settings-business-name">Business Name *</label>
+                  <input type="text" id="settings-business-name" required>
+                </div>
+                <div class="form-group">
+                  <label for="settings-business-category">Category *</label>
+                  <select id="settings-business-category" required></select>
+                </div>
+              </div>
+              <div class="form-group">
+                <label for="settings-business-image">Business Logo/Photo</label>
+                <div class="image-upload-container">
+                  <input type="file" id="settings-business-image" accept="image/*">
+                  <div id="settings-business-image-preview" class="image-preview hidden">
+                    <img id="settings-business-preview-img" src="" alt="Preview">
+                    <button type="button" class="btn btn-small btn-danger" id="remove-settings-business-image">Remove</button>
+                  </div>
+                </div>
+                <input type="hidden" id="settings-business-image-data" value="">
+              </div>
+              <div class="form-group">
+                <label for="settings-business-description">Description</label>
+                <textarea id="settings-business-description" rows="2"></textarea>
+              </div>
+              <div class="form-row two-col">
+                <div class="form-group">
+                  <label for="settings-business-address">Address</label>
+                  <input type="text" id="settings-business-address">
+                </div>
+                <div class="form-group">
+                  <label for="settings-business-phone">Phone</label>
+                  <input type="tel" id="settings-business-phone">
+                </div>
+              </div>
+              <div class="form-row two-col">
+                <div class="form-group">
+                  <label for="settings-business-website">Website URL</label>
+                  <input type="url" id="settings-business-website" placeholder="https://">
+                </div>
+                <div class="form-group">
+                  <label for="settings-business-hours">Business Hours</label>
+                  <input type="text" id="settings-business-hours" placeholder="e.g., Mon-Fri: 9am-5pm">
+                </div>
+              </div>
+              <div class="form-actions">
+                <button type="button" class="btn btn-secondary" id="cancel-settings-business-btn">Cancel</button>
+                <button type="submit" class="btn btn-primary">Add Business</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </section>
+
+      <!-- Login View -->
+      <section id="login-view" class="view hidden">
+        <div class="login-container">
+          <div class="card login-card">
+            <h2>Merchant Login</h2>
+            <p class="login-description">Enter your merchant code to add events and manage your business listing.</p>
+            <form id="login-form">
+              <div class="form-group">
+                <label for="merchant-code">Merchant Code</label>
+                <input type="password" id="merchant-code" placeholder="Enter your code" autocomplete="off">
+              </div>
+              <p id="login-error" class="error-message hidden">Invalid merchant code. Please try again.</p>
+              <div class="form-actions">
+                <button type="button" class="btn btn-secondary" id="cancel-login-btn">Cancel</button>
+                <button type="submit" class="btn btn-primary">Login</button>
+              </div>
+            </form>
+            <p class="login-hint"><strong>Demo code:</strong> balboa2024</p>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <p>&copy; 2026 Balboa Village. All rights reserved.</p>
+    </footer>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
